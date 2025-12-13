@@ -351,6 +351,27 @@
       color: inherit;
     }
     button.link::-moz-focus-inner{ border: 0; }
+    @media (max-width: 560px){
+  .top{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "avatar title"
+      "actions actions";
+    align-items: center;
+    gap: 12px 14px;
+  }
+
+  .avatar{ grid-area: avatar; }
+  .title{ grid-area: title; min-width: 0; }
+  .actions{
+    grid-area: actions;
+    justify-content: flex-start; /* чтобы кнопки не прижимались вправо */
+  }
+
+  /* чуть компактнее, чтобы влезало лучше */
+  .pill{ padding: 9px 10px; font-size: 12.5px; }
+}
   </style>
 </head>
 <body>
@@ -1124,4 +1145,5 @@
 </body>
 
 </html>
+
 
