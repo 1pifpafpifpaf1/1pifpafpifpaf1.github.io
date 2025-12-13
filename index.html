@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Моя страница</title>
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1630;
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+
+      --radius: 22px;
+      --radius2: 16px;
+
+      /* статичный мягкий свет фона */
+      --mx: 50%;
+      --my: 30%;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      overflow-x:hidden;
+
+      background:
+        radial-gradient(900px 520px at var(--mx) var(--my), rgba(124,92,255,.20), transparent 55%),
+        radial-gradient(700px 500px at 20% 90%, rgba(35,213,255,.12), transparent 58%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    #bg{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      display:block;
+    }
+    .vignette{
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events:none;
+      background: radial-gradient(1200px 800px at 50% 30%, transparent 35%, rgba(0,0,0,.45) 90%);
+      mix-blend-mode: multiply;
+    }
+
+    .wrap{
+      min-height: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 28px 14px 44px;
+    }
+
+    /* Сделали окно чуть компактнее */
+    .card{
+      width: min(820px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      transform-style: preserve-3d;
+    }
+
+    .top{
+      position:relative;
+      padding: 22px 20px 14px;
+      display:flex;
+      gap: 14px;
+      align-items:center;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .avatar{
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.18);
+      overflow:hidden;
+      flex: 0 0 auto;
+      background:
+        radial-gradient(120% 120% at 20% 20%, rgba(255,255,255,.22), transparent 55%),
+        linear-gradient(135deg, rgba(124,92,255,.35), rgba(35,213,255,.22));
+      display:grid;
+      place-items:center;
+      position:relative;
+    }
+    .avatar span{
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: .5px;
+      opacity: .95;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    /* Если вставляешь фото, включи img и убери span */
+    .avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      display:block;
+      transform: translateZ(0);
+    }
+
+    .title{ flex: 1 1 auto; min-width: 0; }
+    h1{
+      margin: 0 0 6px;
+      font-size: clamp(18px, 2.1vw, 26px);
+      line-height: 1.15;
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.35;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.9);
+      border-radius: 999px;
+      padding: 9px 11px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      position:relative;
+      overflow:hidden;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .pill:hover{ transform: translateY(-2px); background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.22); }
+    .pill:active{ transform: translateY(0px) scale(.98); }
+    .pill:focus-visible{ outline: 2px solid rgba(124,92,255,.7); outline-offset: 2px; }
+
+    .grid{
+      padding: 14px 14px 6px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+      .top{ padding: 20px 16px 14px; }
+    }
+
+    .panel{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      border-radius: var(--radius2);
+      padding: 14px;
+      transform-style: preserve-3d;
+      transition: transform .18s ease;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .panel:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 220px at 20% 10%, rgba(124,92,255,.18), transparent 60%),
+        radial-gradient(520px 220px at 80% 0%, rgba(35,213,255,.10), transparent 55%);
+      opacity:.8;
+      pointer-events:none;
+      transform: translateZ(-1px);
+    }
+
+    .panel h2{
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.78);
+    }
+
+    .links{ display:grid; gap: 10px; }
+
+    .link{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+      text-decoration:none;
+      color: var(--text);
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+    }
+    .link:active{ transform: translateY(0px) scale(.99); }
+    .link:focus-visible{ outline: 2px solid rgba(160,120,255,.70); outline-offset: 2px; }
+
+    .link:before{
+      content:"";
+      position:absolute;
+      top:-60%;
+      left:-40%;
+      width: 60%;
+      height: 220%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.20), transparent);
+      transform: rotate(25deg);
+      opacity:0;
+      transition: opacity .25s ease, transform .35s ease;
+      pointer-events:none;
+    }
+    .link:hover:before{
+      opacity:1;
+      transform: translateX(240%) rotate(25deg);
+    }
+
+    .ripple{
+      position:absolute;
+      border-radius:999px;
+      transform: translate(-50%, -50%);
+      pointer-events:none;
+      background: radial-gradient(circle, rgba(255,255,255,.45), rgba(255,255,255,.12) 40%, transparent 70%);
+      width: 12px;
+      height: 12px;
+      animation: ripple .55s ease-out forwards;
+    }
+    @keyframes ripple{
+      from{ opacity:.9; transform: translate(-50%,-50%) scale(1); }
+      to{ opacity:0; transform: translate(-50%,-50%) scale(22); }
+    }
+
+    .icon{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+    .icon svg{ width: 20px; height: 20px; opacity:.95; }
+
+    .meta{ flex:1 1 auto; min-width:0; }
+    .meta .name{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-weight: 650;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .meta .desc{
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.3;
+      margin-top: 3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+    }
+
+    .rightCol{ display:grid; gap: 12px; }
+
+    .about{
+      color: rgba(255,255,255,.78);
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .chip{
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+      padding: 8px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.82);
+      transition: transform .18s ease, background .18s ease;
+      user-select:none;
+      cursor: default;
+    }
+    .chip:hover{ transform: translateY(-2px); background: rgba(255,255,255,.06); }
+
+    footer{
+      padding: 12px 14px 16px;
+      display:flex;
+      justify-content:space-between;
+      gap: 12px;
+      align-items:center;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    footer a{ color: rgba(255,255,255,.7); text-decoration:none; }
+    footer a:hover{ text-decoration:underline; }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior:auto !important; }
+      .link, .pill, .panel, .chip{ transition: none !important; }
+      .link:before{ display:none !important; }
+    }
+    button.link{
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    button.link::-moz-focus-inner{ border: 0; }
+  </style>
+</head>
+<body>
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <main class="card">
+      <header class="top">
+        <div class="avatar" aria-label="Аватар">
+
+        <img src="avatar.jpg" alt="Мой аватар" decoding="async" /> 
+
+        </div>
+
+        <div class="title">
+          <h1>Pifpafpifpaf</h1>
+          <p class="subtitle">Киберспортсмен по валоранту</p>
+        </div>
+
+        <div class="actions">
+          <button class="pill" id="bgToggle" type="button" title="Переключить фон">
+            Фон: <span id="bgModeLabel">Снег</span>
+          </button>
+          <button class="pill" id="soundToggle" type="button" title="Включить или выключить звуки">
+            Звук: <span id="soundLabel">Вкл</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <section class="panel" data-tilt>
+          <h2>Связь и игры</h2>
+          <div class="links">
+            <a class="link" href="https://t.me/username" target="_blank" rel="noreferrer">
+              <span class="icon" aria-hidden="true">
+                <!-- Telegram -->
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M21 5.2 3.7 11.9c-1.2.5-1.2 1.2-.2 1.5l4.6 1.4 1.8 5.5c.2.6.1.8.8.8.6 0 .9-.3 1.2-.6l2.2-2.2 4.5 3.3c.8.4 1.4.2 1.6-.8l3-14.2c.3-1.2-.4-1.7-1.2-1.4Z" stroke="rgba(255,255,255,.85)" stroke-width="1.2"/>
+                </svg>
+              </span>
+              <span class="meta">
+                <span class="name">Telegram <span class="badge">@pifpafpifpaf</span></span>
+                <span class="desc">Написать мне</span>
+              </span>
+              <span class="badge">link</span>
+            </a>
+
+            <a class="link" href="https://steamcommunity.com/id/Pifpafpifpaf1337/" target="_blank" rel="noreferrer">
+              <span class="icon" aria-hidden="true">
+                <!-- Gamepad -->
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M8.2 10.5h7.6c1.8 0 3.2 1.4 3.2 3.2 0 .8-.3 1.5-.7 2.1l-1 1.3a2.2 2.2 0 0 1-3.6-.2l-1.1-1.5a.8.8 0 0 0-1.2 0l-1.1 1.5a2.2 2.2 0 0 1-3.6.2l-1-1.3A3.2 3.2 0 0 1 5 13.7c0-1.8 1.4-3.2 3.2-3.2Z"
+                        stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path d="M9 13h-2" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M8 12v2" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M16.5 12.7h.1" stroke="rgba(255,255,255,.85)" stroke-width="2.6" stroke-linecap="round"/>
+                  <path d="M18 14.2h.1" stroke="rgba(255,255,255,.85)" stroke-width="2.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="meta">
+                <span class="name">Steam <span class="badge">профиль</span></span>
+                <span class="desc">Стим легенды</span>
+              </span>
+              <span class="badge">link</span>
+            </a>
+
+            <a class="link" href="https://tracker.gg/valorant/profile/riot/Pifpafpifpaf%23lolz" target="_blank" rel="noreferrer">
+              <span class="icon" aria-hidden="true">
+                <!-- Crosshair -->
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3v4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M12 17v4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M3 12h4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M17 12h4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="rgba(255,255,255,.85)" stroke-width="1.2"/>
+                </svg>
+              </span>
+              <span class="meta">
+                <span class="name">Valorant Tracker</span>
+                <span class="desc">Статистика и матчи</span>
+              </span>
+              <span class="badge">link</span>
+            </a>
+
+              <button class="link" type="button" data-copy-text="pifpafpifpaf">
+            <span class="icon" aria-hidden="true">
+              <!-- Chat -->
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M7.5 7.5h9A3.5 3.5 0 0 1 20 11v4A3.5 3.5 0 0 1 16.5 18H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 15v-4A3.5 3.5 0 0 1 7.5 7.5Z"
+                      stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                <path d="M9 12h6" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="meta">
+              <span class="name">Discord <span class="badge">pifpafpifpaf</span></span>
+              <span class="desc">Нажми, чтобы скопировать ник</span>
+            </span>
+            <span class="badge copyBadge">copy</span>
+          </button>
+
+            <a class="link" href="https://www.twitch.tv/pifpafpifpaf" target="_blank" rel="noreferrer">
+              <span class="icon" aria-hidden="true">
+                <!-- Play -->
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 8.5v7l7-3.5-7-3.5Z" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path d="M6.5 6.5h11A2 2 0 0 1 19.5 8.5v7A2 2 0 0 1 17.5 17.5h-4l-2 2-2-2h-3A2 2 0 0 1 4.5 15.5v-7A2 2 0 0 1 6.5 6.5Z"
+                        stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="meta">
+                <span class="name">Twitch</span>
+                <span class="desc">Может когда-то постримлю</span>
+              </span>
+              <span class="badge">link</span>
+            </a>
+          </div>
+        </section>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <aside class="rightCol">
+          <section class="panel" data-tilt>
+            <h2>Обо мне</h2>
+            <p class="about">
+              Привет! Здесь собраны важные ссылки для связи, игр и музыки.
+            </p>
+            <div class="chips" aria-label="Теги">
+              <span class="chip">🎧 Музыка</span>
+              <span class="chip">🎮 Игры</span>
+              <span class="chip">💬 Связь</span>
+              <span class="chip">✨ Ссылки</span>
+            </div>
+          </section>
+
+          <section class="panel" data-tilt>
+            <h2>Музыка и прочее</h2>
+            <div class="links">
+              <a class="link" href="https://open.spotify.com/user/9nxyvi6nqz9k7n1egby0x9it1" target="_blank" rel="noreferrer">
+                <span class="icon" aria-hidden="true">
+                  <!-- Music -->
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M10 18a2.5 2.5 0 1 1-1.5-2.3V7.5L19 5v8.5" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 16.5a2.5 2.5 0 1 1-1.5-2.3V5" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <span class="name">Spotify <span class="badge">плейлист</span></span>
+                  <span class="desc">Моя музыка</span>
+                </span>
+                <span class="badge">link</span>
+              </a>
+
+              <a class="link" href="https://lolz.guru/members/186163" target="_blank" rel="noreferrer">
+                <span class="icon" aria-hidden="true">
+                  <!-- Forum / Message -->
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7.5 7.5h9A3.5 3.5 0 0 1 20 11v4A3.5 3.5 0 0 1 16.5 18H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 15v-4A3.5 3.5 0 0 1 7.5 7.5Z"
+                          stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M8.8 11.2h6.4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                    <path d="M8.8 13.8h4.6" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <span class="name">Lolz</span>
+                  <span class="desc">Профиль на лолзе</span>
+                </span>
+                <span class="badge">link</span>
+              </a>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <footer>
+        <span>© <span id="year"></span> Pifpafpifpaf</span>
+        <a href="#" id="toTop"></a>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+        async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fallback для случаев, когда clipboard недоступен
+        try{
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+    }
+
+    document.addEventListener('click', async (e) => {
+      const el = e.target.closest('[data-copy-text]');
+      if(!el) return;
+
+      e.preventDefault();
+
+      const text = el.getAttribute('data-copy-text') || '';
+      const ok = await copyText(text);
+
+      const badge = el.querySelector('.copyBadge');
+      if(badge){
+        const old = badge.textContent;
+        badge.textContent = ok ? 'copied' : 'failed';
+        setTimeout(() => badge.textContent = old, 1100);
+      }
+    });
+    // ====== Basics ======
+    document.getElementById('year').textContent = String(new Date().getFullYear());
+
+    document.getElementById('toTop').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Ripple on click for links & pills
+    function addRipple(el, clientX, clientY){
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      const rect = el.getBoundingClientRect();
+      r.style.left = (clientX - rect.left) + 'px';
+      r.style.top  = (clientY - rect.top) + 'px';
+      el.appendChild(r);
+      r.addEventListener('animationend', () => r.remove(), { once: true });
+    }
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('.link, .pill');
+      if(!target) return;
+      addRipple(target, e.clientX, e.clientY);
+    });
+
+
+    // ====== Interaction sounds (WebAudio) ======
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const soundToggle = document.getElementById('soundToggle');
+    const soundLabel = document.getElementById('soundLabel');
+
+    const sound = {
+      enabled: true,
+      ctx: null,
+      master: null,
+      lastHoverAt: 0
+    };
+
+    // load preference
+    const storedSound = localStorage.getItem('soundEnabled');
+    if(storedSound === '0') sound.enabled = false;
+
+    function syncSoundUI(){
+      soundLabel.textContent = sound.enabled ? "Вкл" : "Выкл";
+    }
+    syncSoundUI();
+
+    function ensureAudio(){
+      if(!sound.enabled) return false;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return false;
+
+      if(!sound.ctx){
+        sound.ctx = new AC();
+        sound.master = sound.ctx.createGain();
+        sound.master.gain.value = 0.14; // общая громкость (подкрути по вкусу)
+        sound.master.connect(sound.ctx.destination);
+      }
+      if(sound.ctx.state === 'suspended'){
+        sound.ctx.resume().catch(() => {});
+      }
+      return true;
+    }
+
+    function playHoverSound(){
+      if(!ensureAudio()) return;
+
+      const now = performance.now();
+      if(now - sound.lastHoverAt < 70) return; // throttle
+      sound.lastHoverAt = now;
+
+      const ctx = sound.ctx;
+      const t0 = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(720, t0);
+      osc.frequency.exponentialRampToValueAtTime(520, t0 + 0.03);
+
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(200, t0);
+
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.30, t0 + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(sound.master);
+
+      osc.start(t0);
+      osc.stop(t0 + 0.07);
+    }
+
+    function playClickSound(){
+      if(!ensureAudio()) return;
+
+      const ctx = sound.ctx;
+      const t0 = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc1.type = 'triangle';
+      osc2.type = 'sine';
+
+      const f = 190 + Math.random() * 50;
+      osc1.frequency.setValueAtTime(f, t0);
+      osc1.frequency.exponentialRampToValueAtTime(f * 0.72, t0 + 0.06);
+
+      osc2.frequency.setValueAtTime(f * 2.1, t0);
+      osc2.frequency.exponentialRampToValueAtTime(f * 1.4, t0 + 0.05);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1600, t0);
+      filter.frequency.exponentialRampToValueAtTime(700, t0 + 0.06);
+
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(sound.master);
+
+      osc1.start(t0);
+      osc2.start(t0);
+      osc1.stop(t0 + 0.10);
+      osc2.stop(t0 + 0.10);
+    }
+
+    soundToggle.addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      localStorage.setItem('soundEnabled', sound.enabled ? '1' : '0');
+      syncSoundUI();
+
+      // маленький “клик” при включении (только если включили)
+      if(sound.enabled) playClickSound();
+    });
+
+    // Делегируем звуки на элементы интерфейса
+    // hover
+    document.addEventListener('pointerover', (e) => {
+      const el = e.target.closest('.link, .pill, .chip');
+      if(!el) return;
+      if(prefersReduced) return;
+      playHoverSound();
+    }, { passive: true });
+
+    // click (на pointerdown звучит отзывчивее)
+    document.addEventListener('pointerdown', (e) => {
+      const el = e.target.closest('.link, .pill');
+      if(!el) return;
+      playClickSound();
+    }, { passive: true });
+
+    // ====== Tilt effect ======
+    function attachTilt(el){
+      if (prefersReduced) return;
+
+      const maxTilt = 10; // degrees
+      const maxLift = 6;  // px
+
+      function onMove(e){
+        const rect = el.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;   // 0..1
+        const py = (e.clientY - rect.top) / rect.height;  // 0..1
+        const rx = (py - 0.5) * -2 * maxTilt;
+        const ry = (px - 0.5) *  2 * maxTilt;
+        el.style.transform = `translateY(-${maxLift}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+      }
+      function onLeave(){ el.style.transform = ''; }
+
+      el.addEventListener('mousemove', onMove);
+      el.addEventListener('mouseleave', onLeave);
+    }
+    document.querySelectorAll('[data-tilt]').forEach(attachTilt);
+
+    // ====== Animated background: Snow / Stars ======
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    let W = 0, H = 0, DPR = 1;
+    function resize(){
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize, { passive: true });
+    resize();
+
+    const modes = {
+      snow:  { label: "Снег",  count: 140 },
+      stars: { label: "Звёзды", count: 180 },
+    };
+    let mode = 'snow';
+
+    const bgModeLabel = document.getElementById('bgModeLabel');
+    const bgToggle = document.getElementById('bgToggle');
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    let particles = [];
+
+    function makeParticle(){
+      if(mode === 'snow'){
+        return {
+          x: rand(0, W),
+          y: rand(0, H),
+          r: rand(1.1, 3.2),
+          vx: rand(-0.25, 0.25),
+          vy: rand(0.6, 1.6),
+          wobble: rand(0, Math.PI * 2),
+          wobbleSpeed: rand(0.008, 0.02),
+          alpha: rand(0.25, 0.75),
+        };
+      }
+      return {
+        x: rand(0, W),
+        y: rand(0, H),
+        r: rand(0.7, 1.9),
+        vx: rand(-0.08, 0.08),
+        vy: rand(-0.05, 0.12),
+        tw: rand(0, Math.PI * 2),
+        twSpeed: rand(0.008, 0.02),
+        alpha: rand(0.25, 0.85),
+      };
+    }
+
+    function rebuild(){
+      const n = modes[mode].count;
+      particles = Array.from({ length: n }, () => makeParticle());
+      bgModeLabel.textContent = modes[mode].label;
+    }
+
+    bgToggle.addEventListener('click', () => {
+      mode = (mode === 'snow') ? 'stars' : 'snow';
+      rebuild();
+    });
+
+    rebuild();
+
+    // ====== Premium mouse trail (smooth ribbon + sparks) ======
+    const pointer = { x: W * 0.5, y: H * 0.35 };
+
+    const trail = [];
+    const sparks = [];
+
+    const TRAIL_MAX = 120;
+    const TRAIL_LIFE = 720;
+    const TRAIL_MIN_DIST = 2.2;
+
+    const SPARK_MAX = 140;
+    const SPARK_LIFE = 420;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t){ return a + (b - a) * t; }
+
+    function pushTrail(x, y){
+      if (prefersReduced) return;
+
+      const now = performance.now();
+
+      if(trail.length === 0){
+        trail.push({ x, y, t: now, s: 0 });
+        return;
+      }
+
+      const last = trail[trail.length - 1];
+      const dx = x - last.x;
+      const dy = y - last.y;
+      const dist = Math.hypot(dx, dy);
+      if(dist < TRAIL_MIN_DIST) return;
+
+      const dt = Math.max(8, now - last.t);
+      const speed = dist / dt; // px per ms
+
+      trail.push({ x, y, t: now, s: speed });
+
+      if(trail.length > TRAIL_MAX){
+        trail.splice(0, trail.length - TRAIL_MAX);
+      }
+
+      if(speed > 0.55){
+        const dir = Math.atan2(dy, dx);
+        const count = Math.floor(clamp(speed * 6, 2, 6));
+        for(let i = 0; i < count; i++){
+          if(sparks.length > SPARK_MAX) break;
+
+          const spread = rand(-0.9, 0.9);
+          const a = dir + spread;
+          const v = rand(1.4, 3.6) * (0.6 + speed);
+          sparks.push({
+            x, y,
+            vx: Math.cos(a) * v,
+            vy: Math.sin(a) * v,
+            t: now,
+            life: rand(SPARK_LIFE * 0.75, SPARK_LIFE * 1.15),
+            r: rand(0.8, 1.9)
+          });
+        }
+      }
+    }
+
+    function chaikin(points, iterations = 2){
+      if(points.length < 3) return points.slice();
+
+      let arr = points.map(p => ({ ...p }));
+      for(let it = 0; it < iterations; it++){
+        const out = [arr[0]];
+        for(let i = 0; i < arr.length - 1; i++){
+          const p0 = arr[i];
+          const p1 = arr[i + 1];
+
+          const q = {
+            x: 0.75 * p0.x + 0.25 * p1.x,
+            y: 0.75 * p0.y + 0.25 * p1.y,
+            t: 0.75 * p0.t + 0.25 * p1.t,
+            s: 0.75 * p0.s + 0.25 * p1.s
+          };
+          const r = {
+            x: 0.25 * p0.x + 0.75 * p1.x,
+            y: 0.25 * p0.y + 0.75 * p1.y,
+            t: 0.25 * p0.t + 0.75 * p1.t,
+            s: 0.25 * p0.s + 0.75 * p1.s
+          };
+
+          out.push(q, r);
+        }
+        out.push(arr[arr.length - 1]);
+        arr = out;
+      }
+      return arr;
+    }
+
+    function updateAndDrawSparks(now, dt){
+      if(sparks.length === 0) return;
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.lineCap = 'round';
+
+      for(let i = sparks.length - 1; i >= 0; i--){
+        const sp = sparks[i];
+        const age = now - sp.t;
+        const k = 1 - clamp(age / sp.life, 0, 1);
+
+        if(k <= 0){
+          sparks.splice(i, 1);
+          continue;
+        }
+
+        sp.vx *= 0.985;
+        sp.vy = sp.vy * 0.985 + 0.0035 * dt;
+        sp.x += sp.vx * (dt * 0.06);
+        sp.y += sp.vy * (dt * 0.06);
+
+        const alpha = 0.52 * k;
+        ctx.strokeStyle = `rgba(160,120,255, ${alpha})`;
+        ctx.lineWidth = sp.r * (1.2 + (1 - k));
+        ctx.beginPath();
+        ctx.moveTo(sp.x, sp.y);
+        ctx.lineTo(sp.x - sp.vx * 1.8, sp.y - sp.vy * 1.8);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawTrail(now, dt){
+      while(trail.length && (now - trail[0].t) > TRAIL_LIFE) trail.shift();
+      if(trail.length < 2) return;
+
+      const pts = chaikin(trail, 2);
+      if(pts.length < 2) return;
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const n = pts.length;
+
+      for(let i = 1; i < n; i++){
+        const a = pts[i - 1];
+        const b = pts[i];
+
+        const age = (now - b.t) / TRAIL_LIFE;
+        const fade = clamp(1 - age, 0, 1);
+
+        const prog = i / (n - 1);
+        const sp = clamp(b.s * 2.6, 0, 1);
+
+        const baseW = lerp(1.2, 6.0, Math.pow(prog, 0.9));
+        const w = baseW * (0.75 + 0.65 * sp) * (0.55 + 0.45 * fade);
+
+        const hue = (now * 0.03 + prog * 60) % 360;
+
+         const PURPLE_OUT = '160, 120, 255'; // внешнее свечение
+        const PURPLE_IN  = '135,  95, 235'; // внутренняя лента
+
+        // outer glow
+        ctx.strokeStyle = `rgba(${PURPLE_OUT}, ${0.075 * fade})`;
+        ctx.lineWidth = w * 2.6;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+
+        // inner color
+        ctx.strokeStyle = `rgba(${PURPLE_IN}, ${0.13 * fade})`;
+        ctx.lineWidth = w * 1.25;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+
+        // bright core (оставляем белым, но не слишком сильным)
+        ctx.strokeStyle = `rgba(255,255,255,${0.085 * fade})`;
+        ctx.lineWidth = Math.max(0.8, w * 0.35);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+
+      const head = pts[n - 1];
+      const headFade = clamp(1 - (now - head.t) / (TRAIL_LIFE * 0.7), 0, 1);
+      const g = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 40);
+        g.addColorStop(0, `rgba(255,255,255,${0.07 * headFade})`);
+        g.addColorStop(0.35, `rgba(160,120,255,${0.10 * headFade})`);
+        g.addColorStop(1, `rgba(160,120,255,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, 40, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      updateAndDrawSparks(now, dt);
+    }
+
+    // Pointer events: обновляют pointer + хвост
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pushTrail(e.clientX, e.clientY);
+    }, { passive: true });
+
+    window.addEventListener('pointerdown', (e) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pushTrail(e.clientX, e.clientY);
+      // первый клик часто “размораживает” AudioContext в браузере
+      ensureAudio();
+    }, { passive: true });
+
+    // ====== Background animation loop ======
+    let lastT = performance.now();
+
+    function loop(t){
+      const dt = Math.min(32, t - lastT);
+      lastT = t;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const influenceRadius = 140;
+      const ir2 = influenceRadius * influenceRadius;
+
+      for(const p of particles){
+        if(mode === 'snow'){
+          p.wobble += p.wobbleSpeed * dt;
+          const sway = Math.sin(p.wobble) * 0.35;
+
+          const dx = p.x - pointer.x;
+          const dy = p.y - pointer.y;
+          const d2 = dx*dx + dy*dy;
+          if(d2 < ir2){
+            const k = (1 - d2 / ir2) * 0.35;
+            p.x += (dx / Math.sqrt(d2 + 0.001)) * k * dt * 0.35;
+          }
+
+          p.x += (p.vx + sway) * dt * 0.06;
+          p.y += p.vy * dt * 0.06;
+
+          if(p.y - p.r > H) { p.y = -p.r; p.x = rand(0, W); }
+          if(p.x < -20) p.x = W + 20;
+          if(p.x > W + 20) p.x = -20;
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          p.tw += p.twSpeed * dt;
+          const twinkle = (Math.sin(p.tw) * 0.25 + 0.75);
+          const a = p.alpha * twinkle;
+
+          const dx = pointer.x - p.x;
+          const dy = pointer.y - p.y;
+          const d2 = dx*dx + dy*dy;
+          if(d2 < ir2){
+            const k = (1 - d2 / ir2) * 0.08;
+            p.x += (dx / Math.sqrt(d2 + 0.001)) * k * dt * 0.12;
+            p.y += (dy / Math.sqrt(d2 + 0.001)) * k * dt * 0.12;
+          }
+
+          p.x += p.vx * dt * 0.06;
+          p.y += p.vy * dt * 0.06;
+
+          if(p.y < -10) p.y = H + 10;
+          if(p.y > H + 10) p.y = -10;
+          if(p.x < -10) p.x = W + 10;
+          if(p.x > W + 10) p.x = -10;
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,255,255,${a})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if(p.r > 1.5){
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(124,92,255,${a * 0.12})`;
+            ctx.arc(p.x, p.y, p.r * 4.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Trail поверх фона
+      drawTrail(t, dt);
+
+      requestAnimationFrame(loop);
+    }
+
+    if(!prefersReduced) requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
