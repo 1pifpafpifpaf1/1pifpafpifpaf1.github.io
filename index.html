@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Моя страница</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
     :root{
       --bg0:#070A12;
@@ -36,6 +37,7 @@
         linear-gradient(180deg, var(--bg0), var(--bg1));
     }
 
+    /* Canvas background */
     #bg{
       position: fixed;
       inset: 0;
@@ -59,9 +61,11 @@
       align-items:center;
       justify-content:center;
       padding: 28px 14px 44px;
+      position: relative;
+      z-index: 1; /* выше новогоднего фона */
     }
 
-    /* Сделали окно чуть компактнее */
+    /* Окно */
     .card{
       width: min(820px, 100%);
       background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
@@ -83,19 +87,27 @@
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
 
+    /* Обёртка под шапку */
+    .avatarDecor{
+      position: relative;
+      flex: 0 0 auto;
+      display: inline-block;
+      overflow: visible;
+    }
+
     .avatar{
       width: 64px;
       height: 64px;
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,.18);
       overflow:hidden;
-      flex: 0 0 auto;
       background:
         radial-gradient(120% 120% at 20% 20%, rgba(255,255,255,.22), transparent 55%),
         linear-gradient(135deg, rgba(124,92,255,.35), rgba(35,213,255,.22));
       display:grid;
       place-items:center;
       position:relative;
+      z-index: 2; /* ниже шапки */
     }
     .avatar span{
       font-weight: 800;
@@ -104,7 +116,6 @@
       opacity: .95;
       text-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
-    /* Если вставляешь фото, включи img и убери span */
     .avatar img{
       width:100%;
       height:100%;
@@ -126,6 +137,7 @@
       color: var(--muted);
       font-size: 13.5px;
       line-height: 1.35;
+      min-height: 1em;
     }
 
     .actions{
@@ -343,6 +355,7 @@
       .link, .pill, .panel, .chip{ transition: none !important; }
       .link:before{ display:none !important; }
     }
+
     button.link{
       width: 100%;
       text-align: left;
@@ -351,40 +364,389 @@
       color: inherit;
     }
     button.link::-moz-focus-inner{ border: 0; }
+
+    /* Мобильная шапка */
     @media (max-width: 560px){
-  .top{
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "avatar title"
-      "actions actions";
-    align-items: center;
-    gap: 12px 14px;
-  }
+      .top{
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+          "avatar title"
+          "actions actions";
+        align-items: center;
+        gap: 12px 14px;
+      }
+      .avatarDecor{ grid-area: avatar; }
+      .title{ grid-area: title; min-width: 0; }
+      .actions{
+        grid-area: actions;
+        justify-content: flex-start;
+      }
+      .pill{ padding: 9px 10px; font-size: 12.5px; }
+    }
 
-  .avatar{ grid-area: avatar; }
-  .title{ grid-area: title; min-width: 0; }
-  .actions{
-    grid-area: actions;
-    justify-content: flex-start; /* чтобы кнопки не прижимались вправо */
-  }
+    /* ====== New Year: Hat (fixed, stable) ====== */
+    .nyHat{ display:none; }
+    body.ny .nyHat{ display:block; }
 
-  /* чуть компактнее, чтобы влезало лучше */
-  .pill{ padding: 9px 10px; font-size: 12.5px; }
-}
+    /* Даем место шапке, чтобы она не вылезала за верх карточки (.card overflow:hidden) */
+    body.ny .top{ padding-top: 34px; }
+
+    body.ny .nyHat{
+      position:absolute;
+      left: -8px;
+      top: -16px;
+      width: 54px;
+      height: 42px;
+      z-index: 10;
+      pointer-events:none;
+      transform: rotate(-16deg);
+      transform-origin: 18px 36px;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.32));
+      opacity: .98;
+    }
+
+    body.ny .nyHat svg{
+      width: 100%;
+      height: 100%;
+      display:block;
+    }
+
+    /* На телефоне чуть компактнее */
+    @media (max-width: 560px){
+      body.ny .top{ padding-top: 32px; }
+      body.ny .nyHat{
+        width: 50px;
+        height: 40px;
+        left: -7px;
+        top: -15px;
+        transform: rotate(-14deg);
+      }
+    }
+
+    /* Маленькая "2026" рядом с ником в NY режиме */
+    body.ny .title h1::after{
+      content:" 2026";
+      font-size: .72em;
+      font-weight: 800;
+      color: rgba(255,230,140,.80);
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    /* ====== New Year: Forest (multiple trees, brighter) ====== */
+    .nyForest{
+      position: fixed;
+      inset: 0;
+      z-index: -1;         /* между canvas(-2) и vignette(-1) */
+      pointer-events: none; /* клики не блокируем */
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+    body.ny .nyForest{ opacity: 1; }
+
+    .nyTree{
+      position: fixed;
+      bottom: -14px;
+      width: min(280px, 52vw);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .35s ease, transform .35s ease, filter .25s ease;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,.32));
+      will-change: transform, opacity;
+    }
+    body.ny .nyTree{
+      opacity: .82;
+      transform: translateY(0);
+    }
+
+    .nyTree--right{ right: 2.2vw; }
+    .nyTree--left{ left: 2.2vw; width: min(220px, 44vw); opacity: .0; }
+    body.ny .nyTree--left{ opacity: .62; }
+    .nyTree--center{ left: 50%; width: min(240px, 48vw); opacity: 0; transform: translate(-50%, 12px) scale(.92); }
+    body.ny .nyTree--center{ opacity: .60; transform: translate(-50%, 0) scale(.92); }
+    .nyTree--far{ right: 24vw; width: min(190px, 40vw); opacity: 0; transform: translateY(12px) scale(.86); }
+    body.ny .nyTree--far{ opacity: .48; transform: translateY(0) scale(.86); }
+
+    .nyTree svg{ width:100%; height:auto; display:block; }
+
+    .nyTreeBody{
+      fill: rgba(40, 170, 110, .20);
+      stroke: rgba(200, 255, 220, .18);
+      stroke-width: 1.2;
+    }
+    .nyTrunk{
+      fill: rgba(120, 85, 60, .16);
+      stroke: rgba(255,255,255,.10);
+      stroke-width: 1.1;
+    }
+
+    .nyStar{
+      fill: rgba(255, 230, 140, .26);
+      stroke: rgba(255, 230, 140, .34);
+      stroke-width: 1.2;
+      filter: drop-shadow(0 0 16px rgba(255, 230, 140, .22));
+      animation: nyTwinkle 2.4s ease-in-out infinite;
+      transform-origin: 50% 50%;
+    }
+
+    .nyGarland{
+      fill: none;
+      stroke: rgba(255,255,255,.14);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      opacity: .9;
+      transition: opacity .2s ease, stroke .2s ease;
+    }
+
+    /* Лампочки-гирлянда: мерцают + переливаются цветами */
+    .nyBulb{
+      /* отдельные задержки для двух анимаций */
+      --twDelay: 0s;
+      --colDelay: 0s;
+      --colDur: 6.8s;
+
+      filter: drop-shadow(0 0 14px rgba(255,255,255,.18));
+      opacity: .92;
+      transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+      transform-origin: center;
+
+      animation-name: nyTwinkle, nyColorCycle;
+      animation-duration: 1.55s, var(--colDur);
+      animation-timing-function: ease-in-out, linear;
+      animation-iteration-count: infinite, infinite;
+      animation-delay: var(--twDelay), var(--colDelay);
+    }
+
+    /* цикл смены цветов (анимируем fill у SVG circle) */
+    @keyframes nyColorCycle{
+      0%   { fill: rgba(255,  90, 140, .92); }
+      16%  { fill: rgba( 90, 210, 255, .92); }
+      33%  { fill: rgba(255, 230, 140, .92); }
+      50%  { fill: rgba(120, 255, 180, .92); }
+      66%  { fill: rgba(160, 120, 255, .92); }
+      83%  { fill: rgba(255, 255, 255, .92); }
+      100% { fill: rgba(255,  90, 140, .92); }
+    }
+
+    /* разнесём лампочки по фазам (twinkle + color), чтобы перелив был не синхронный */
+    .nyBulb.b1  { --twDelay: 0.00s; --colDelay: -0.20s; --colDur: 6.6s; }
+    .nyBulb.b2  { --twDelay: 0.20s; --colDelay: -1.10s; --colDur: 7.0s; }
+    .nyBulb.b3  { --twDelay: 0.40s; --colDelay: -2.00s; --colDur: 6.3s; }
+    .nyBulb.b4  { --twDelay: 0.60s; --colDelay: -2.90s; --colDur: 7.4s; }
+
+    .nyBulb.b5  { --twDelay: 0.10s; --colDelay: -0.65s; --colDur: 6.9s; }
+    .nyBulb.b6  { --twDelay: 0.30s; --colDelay: -1.55s; --colDur: 6.4s; }
+    .nyBulb.b7  { --twDelay: 0.50s; --colDelay: -2.45s; --colDur: 7.2s; }
+    .nyBulb.b8  { --twDelay: 0.70s; --colDelay: -3.35s; --colDur: 6.7s; }
+
+    .nyBulb.b9  { --twDelay: 0.15s; --colDelay: -0.95s; --colDur: 7.6s; }
+    .nyBulb.b10 { --twDelay: 0.35s; --colDelay: -1.85s; --colDur: 6.2s; }
+    .nyBulb.b11 { --twDelay: 0.55s; --colDelay: -2.75s; --colDur: 7.1s; }
+    .nyBulb.b12 { --twDelay: 0.75s; --colDelay: -3.65s; --colDur: 6.5s; }
+
+    /* реакция лампочек при "наведении" (мы выставляем .isHover через JS) */
+    body.ny .nyTree.isHover{
+      filter: drop-shadow(0 16px 34px rgba(0,0,0,.32)) drop-shadow(0 0 18px rgba(255,230,140,.10));
+    }
+    body.ny .nyTree.isHover .nyBulb{
+      opacity: 1;
+      transform: scale(1.35);
+      filter: drop-shadow(0 0 22px rgba(255,255,255,.22));
+    }
+    body.ny .nyTree.isHover .nyGarland{
+      opacity: 1;
+      stroke: rgba(255,255,255,.22);
+    }
+    body.ny .nyTree.isHover .nyStar{
+      filter: drop-shadow(0 0 22px rgba(255,230,140,.26));
+      transform: scale(1.06);
+    }
+
+    @keyframes nyTwinkle{
+      0%, 100%{ opacity: .55; transform: translateZ(0) scale(0.96); }
+      50%     { opacity: 1;    transform: translateZ(0) scale(1.06); }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .nyBulb, .nyStar{ animation: none !important; }
+    }
+
+    /* В Safari иногда «clip» анимаций fill в SVG выглядит лучше, если подсказать GPU */
+    .nyBulb{ will-change: opacity, transform, filter, fill; }
   </style>
 </head>
+
 <body>
   <canvas id="bg" aria-hidden="true"></canvas>
+
+  <!-- Новогодний фон: несколько ёлок -->
+  <div class="nyForest" aria-hidden="true">
+    <!-- right -->
+    <div class="nyTree nyTree--right">
+      <svg viewBox="0 0 260 340">
+        <path class="nyStar" d="M130 20l6 14 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2 6-14z"/>
+        <path class="nyTreeBody" d="M130 48 C112 70, 96 92, 84 118 C102 114, 114 114, 130 108 C146 114, 158 114, 176 118 C164 92, 148 70, 130 48 Z"/>
+        <path class="nyTreeBody" d="M130 96 C104 126, 82 158, 66 202 C92 194, 110 194, 130 186 C150 194, 168 194, 194 202 C178 158, 156 126, 130 96 Z" opacity=".95"/>
+        <path class="nyTreeBody" d="M130 158 C98 198, 72 244, 52 304 C90 292, 112 292, 130 282 C148 292, 170 292, 208 304 C188 244, 162 198, 130 158 Z" opacity=".92"/>
+        <path class="nyTrunk" d="M114 296h32v36h-32z"/>
+        <path class="nyGarland" d="M70 210 C105 190, 155 190, 190 210" />
+        <path class="nyGarland" d="M82 150 C110 136, 150 136, 178 150" />
+        <path class="nyGarland" d="M92 112 C112 102, 148 102, 168 112" />
+        <circle class="nyBulb b1" cx="92" cy="112" r="4"/>
+        <circle class="nyBulb b2" cx="112" cy="106" r="4"/>
+        <circle class="nyBulb b3" cx="148" cy="106" r="4"/>
+        <circle class="nyBulb b4" cx="168" cy="112" r="4"/>
+        <circle class="nyBulb b5" cx="82" cy="150" r="4.2"/>
+        <circle class="nyBulb b6" cx="110" cy="142" r="4.2"/>
+        <circle class="nyBulb b7" cx="150" cy="142" r="4.2"/>
+        <circle class="nyBulb b8" cx="178" cy="150" r="4.2"/>
+        <circle class="nyBulb b9"  cx="70"  cy="210" r="4.6"/>
+        <circle class="nyBulb b10" cx="105" cy="198" r="4.6"/>
+        <circle class="nyBulb b11" cx="155" cy="198" r="4.6"/>
+        <circle class="nyBulb b12" cx="190" cy="210" r="4.6"/>
+      </svg>
+    </div>
+
+    <!-- left -->
+    <div class="nyTree nyTree--left">
+      <svg viewBox="0 0 260 340">
+        <path class="nyStar" d="M130 20l6 14 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2 6-14z"/>
+        <path class="nyTreeBody" d="M130 48 C112 70, 96 92, 84 118 C102 114, 114 114, 130 108 C146 114, 158 114, 176 118 C164 92, 148 70, 130 48 Z"/>
+        <path class="nyTreeBody" d="M130 96 C104 126, 82 158, 66 202 C92 194, 110 194, 130 186 C150 194, 168 194, 194 202 C178 158, 156 126, 130 96 Z" opacity=".95"/>
+        <path class="nyTreeBody" d="M130 158 C98 198, 72 244, 52 304 C90 292, 112 292, 130 282 C148 292, 170 292, 208 304 C188 244, 162 198, 130 158 Z" opacity=".92"/>
+        <path class="nyTrunk" d="M114 296h32v36h-32z"/>
+        <path class="nyGarland" d="M70 210 C105 190, 155 190, 190 210" />
+        <path class="nyGarland" d="M82 150 C110 136, 150 136, 178 150" />
+        <path class="nyGarland" d="M92 112 C112 102, 148 102, 168 112" />
+        <circle class="nyBulb b1" cx="92" cy="112" r="4"/>
+        <circle class="nyBulb b2" cx="112" cy="106" r="4"/>
+        <circle class="nyBulb b3" cx="148" cy="106" r="4"/>
+        <circle class="nyBulb b4" cx="168" cy="112" r="4"/>
+        <circle class="nyBulb b5" cx="82" cy="150" r="4.2"/>
+        <circle class="nyBulb b6" cx="110" cy="142" r="4.2"/>
+        <circle class="nyBulb b7" cx="150" cy="142" r="4.2"/>
+        <circle class="nyBulb b8" cx="178" cy="150" r="4.2"/>
+        <circle class="nyBulb b9"  cx="70"  cy="210" r="4.6"/>
+        <circle class="nyBulb b10" cx="105" cy="198" r="4.6"/>
+        <circle class="nyBulb b11" cx="155" cy="198" r="4.6"/>
+        <circle class="nyBulb b12" cx="190" cy="210" r="4.6"/>
+      </svg>
+    </div>
+
+    <!-- center -->
+    <div class="nyTree nyTree--center">
+      <svg viewBox="0 0 260 340">
+        <path class="nyStar" d="M130 20l6 14 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2 6-14z"/>
+        <path class="nyTreeBody" d="M130 48 C112 70, 96 92, 84 118 C102 114, 114 114, 130 108 C146 114, 158 114, 176 118 C164 92, 148 70, 130 48 Z"/>
+        <path class="nyTreeBody" d="M130 96 C104 126, 82 158, 66 202 C92 194, 110 194, 130 186 C150 194, 168 194, 194 202 C178 158, 156 126, 130 96 Z" opacity=".95"/>
+        <path class="nyTreeBody" d="M130 158 C98 198, 72 244, 52 304 C90 292, 112 292, 130 282 C148 292, 170 292, 208 304 C188 244, 162 198, 130 158 Z" opacity=".92"/>
+        <path class="nyTrunk" d="M114 296h32v36h-32z"/>
+        <path class="nyGarland" d="M70 210 C105 190, 155 190, 190 210" />
+        <path class="nyGarland" d="M82 150 C110 136, 150 136, 178 150" />
+        <path class="nyGarland" d="M92 112 C112 102, 148 102, 168 112" />
+        <circle class="nyBulb b1" cx="92" cy="112" r="4"/>
+        <circle class="nyBulb b2" cx="112" cy="106" r="4"/>
+        <circle class="nyBulb b3" cx="148" cy="106" r="4"/>
+        <circle class="nyBulb b4" cx="168" cy="112" r="4"/>
+        <circle class="nyBulb b5" cx="82" cy="150" r="4.2"/>
+        <circle class="nyBulb b6" cx="110" cy="142" r="4.2"/>
+        <circle class="nyBulb b7" cx="150" cy="142" r="4.2"/>
+        <circle class="nyBulb b8" cx="178" cy="150" r="4.2"/>
+        <circle class="nyBulb b9"  cx="70"  cy="210" r="4.6"/>
+        <circle class="nyBulb b10" cx="105" cy="198" r="4.6"/>
+        <circle class="nyBulb b11" cx="155" cy="198" r="4.6"/>
+        <circle class="nyBulb b12" cx="190" cy="210" r="4.6"/>
+      </svg>
+    </div>
+
+    <!-- far (small) -->
+    <div class="nyTree nyTree--far">
+      <svg viewBox="0 0 260 340">
+        <path class="nyStar" d="M130 20l6 14 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2 6-14z"/>
+        <path class="nyTreeBody" d="M130 48 C112 70, 96 92, 84 118 C102 114, 114 114, 130 108 C146 114, 158 114, 176 118 C164 92, 148 70, 130 48 Z"/>
+        <path class="nyTreeBody" d="M130 96 C104 126, 82 158, 66 202 C92 194, 110 194, 130 186 C150 194, 168 194, 194 202 C178 158, 156 126, 130 96 Z" opacity=".95"/>
+        <path class="nyTreeBody" d="M130 158 C98 198, 72 244, 52 304 C90 292, 112 292, 130 282 C148 292, 170 292, 208 304 C188 244, 162 198, 130 158 Z" opacity=".92"/>
+        <path class="nyTrunk" d="M114 296h32v36h-32z"/>
+        <path class="nyGarland" d="M70 210 C105 190, 155 190, 190 210" />
+        <path class="nyGarland" d="M82 150 C110 136, 150 136, 178 150" />
+        <path class="nyGarland" d="M92 112 C112 102, 148 102, 168 112" />
+        <circle class="nyBulb b1" cx="92" cy="112" r="4"/>
+        <circle class="nyBulb b2" cx="112" cy="106" r="4"/>
+        <circle class="nyBulb b3" cx="148" cy="106" r="4"/>
+        <circle class="nyBulb b4" cx="168" cy="112" r="4"/>
+        <circle class="nyBulb b5" cx="82" cy="150" r="4.2"/>
+        <circle class="nyBulb b6" cx="110" cy="142" r="4.2"/>
+        <circle class="nyBulb b7" cx="150" cy="142" r="4.2"/>
+        <circle class="nyBulb b8" cx="178" cy="150" r="4.2"/>
+        <circle class="nyBulb b9"  cx="70"  cy="210" r="4.6"/>
+        <circle class="nyBulb b10" cx="105" cy="198" r="4.6"/>
+        <circle class="nyBulb b11" cx="155" cy="198" r="4.6"/>
+        <circle class="nyBulb b12" cx="190" cy="210" r="4.6"/>
+      </svg>
+    </div>
+  </div>
+
   <div class="vignette" aria-hidden="true"></div>
 
   <div class="wrap">
     <main class="card">
       <header class="top">
-        <div class="avatar" aria-label="Аватар">
+        <div class="avatarDecor">
+          <div class="nyHat" aria-hidden="true">
+            <svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="capGrad" x1="18" y1="10" x2="105" y2="70" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#BDA7FF"/>
+                  <stop offset="0.45" stop-color="#8F6BFF"/>
+                  <stop offset="1" stop-color="#5B2BFF"/>
+                </linearGradient>
 
-        <img src="avatar.jpg" alt="Мой аватар" decoding="async" /> 
+                <linearGradient id="brimGrad" x1="14" y1="52" x2="110" y2="80" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="rgba(255,255,255,0.96)"/>
+                  <stop offset="1" stop-color="rgba(210,200,255,0.75)"/>
+                </linearGradient>
 
+                <radialGradient id="pomGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+                  gradientTransform="translate(98 18) rotate(90) scale(14)">
+                  <stop offset="0" stop-color="rgba(255,255,255,0.98)"/>
+                  <stop offset="0.55" stop-color="rgba(225,215,255,0.92)"/>
+                  <stop offset="1" stop-color="rgba(150,120,255,0.35)"/>
+                </radialGradient>
+              </defs>
+
+              <!-- помпон -->
+              <circle cx="98" cy="18" r="12" fill="url(#pomGrad)"/>
+              <circle cx="94" cy="14" r="3.8" fill="rgba(255,255,255,0.55)"/>
+
+              <!-- фиолетовая “ткань” -->
+              <path d="M24 56
+                      C18 34, 32 18, 55 12
+                      C78 6, 96 18, 102 36
+                      C106 48, 99 59, 86 60
+                      C65 61, 44 60, 24 56 Z"
+                    fill="url(#capGrad)"
+                    stroke="rgba(255,255,255,0.16)"
+                    stroke-width="2"/>
+
+              <!-- лёгкий блик -->
+              <path d="M34 52
+                      C32 40, 40 27, 56 23
+                      C70 20, 82 25, 88 34"
+                    stroke="rgba(255,255,255,0.22)"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                    opacity="0.28"/>
+
+              <!-- белая кромка -->
+              <rect x="14" y="52" width="96" height="24" rx="12"
+                    fill="url(#brimGrad)"
+                    stroke="rgba(255,255,255,0.18)"
+                    stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="avatar" aria-label="Аватар">
+            <img src="avatar.jpg" alt="Мой аватар" decoding="async" onerror="this.remove(); this.parentElement.insertAdjacentHTML('beforeend','<span>PP</span>');" />
+          </div>
         </div>
 
         <div class="title">
@@ -399,17 +761,18 @@
           <button class="pill" id="soundToggle" type="button" title="Включить или выключить звуки">
             Звук: <span id="soundLabel">Вкл</span>
           </button>
+          <button class="pill" id="nyToggle" type="button" title="Новогодний режим">
+            Новый год: <span id="nyLabel">Вкл</span>
+          </button>
         </div>
       </header>
 
       <section class="grid">
-        <!-- ЛЕВАЯ КОЛОНКА -->
         <section class="panel" data-tilt>
           <h2>Связь и игры</h2>
           <div class="links">
-            <a class="link" href="https://t.me/pifpafpifpaf" target="_blank" rel="noreferrer">
+            <a class="link" href="https://t.me/username" target="_blank" rel="noreferrer">
               <span class="icon" aria-hidden="true">
-                <!-- Telegram -->
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M21 5.2 3.7 11.9c-1.2.5-1.2 1.2-.2 1.5l4.6 1.4 1.8 5.5c.2.6.1.8.8.8.6 0 .9-.3 1.2-.6l2.2-2.2 4.5 3.3c.8.4 1.4.2 1.6-.8l3-14.2c.3-1.2-.4-1.7-1.2-1.4Z" stroke="rgba(255,255,255,.85)" stroke-width="1.2"/>
                 </svg>
@@ -423,7 +786,6 @@
 
             <a class="link" href="https://steamcommunity.com/id/Pifpafpifpaf1337/" target="_blank" rel="noreferrer">
               <span class="icon" aria-hidden="true">
-                <!-- Gamepad -->
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M8.2 10.5h7.6c1.8 0 3.2 1.4 3.2 3.2 0 .8-.3 1.5-.7 2.1l-1 1.3a2.2 2.2 0 0 1-3.6-.2l-1.1-1.5a.8.8 0 0 0-1.2 0l-1.1 1.5a2.2 2.2 0 0 1-3.6.2l-1-1.3A3.2 3.2 0 0 1 5 13.7c0-1.8 1.4-3.2 3.2-3.2Z"
                         stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
@@ -442,7 +804,6 @@
 
             <a class="link" href="https://tracker.gg/valorant/profile/riot/Pifpafpifpaf%23lolz" target="_blank" rel="noreferrer">
               <span class="icon" aria-hidden="true">
-                <!-- Crosshair -->
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M12 3v4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
                   <path d="M12 17v4" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
@@ -458,25 +819,23 @@
               <span class="badge">link</span>
             </a>
 
-              <button class="link" type="button" data-copy-text="pifpafpifpaf">
-            <span class="icon" aria-hidden="true">
-              <!-- Chat -->
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M7.5 7.5h9A3.5 3.5 0 0 1 20 11v4A3.5 3.5 0 0 1 16.5 18H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 15v-4A3.5 3.5 0 0 1 7.5 7.5Z"
-                      stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
-                <path d="M9 12h6" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
-            </span>
-            <span class="meta">
-              <span class="name">Discord <span class="badge">pifpafpifpaf</span></span>
-              <span class="desc">Нажми, чтобы скопировать ник</span>
-            </span>
-            <span class="badge copyBadge">copy</span>
-          </button>
+            <button class="link" type="button" data-copy-text="pifpafpifpaf">
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7.5 7.5h9A3.5 3.5 0 0 1 20 11v4A3.5 3.5 0 0 1 16.5 18H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 15v-4A3.5 3.5 0 0 1 7.5 7.5Z"
+                        stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path d="M9 12h6" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="meta">
+                <span class="name">Discord <span class="badge">pifpafpifpaf</span></span>
+                <span class="desc">Нажми, чтобы скопировать ник</span>
+              </span>
+              <span class="badge copyBadge">copy</span>
+            </button>
 
             <a class="link" href="https://www.twitch.tv/pifpafpifpaf" target="_blank" rel="noreferrer">
               <span class="icon" aria-hidden="true">
-                <!-- Play -->
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M9 8.5v7l7-3.5-7-3.5Z" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
                   <path d="M6.5 6.5h11A2 2 0 0 1 19.5 8.5v7A2 2 0 0 1 17.5 17.5h-4l-2 2-2-2h-3A2 2 0 0 1 4.5 15.5v-7A2 2 0 0 1 6.5 6.5Z"
@@ -492,13 +851,10 @@
           </div>
         </section>
 
-        <!-- ПРАВАЯ КОЛОНКА -->
         <aside class="rightCol">
           <section class="panel" data-tilt>
             <h2>Обо мне</h2>
-            <p class="about">
-              Привет! Здесь собраны важные ссылки для связи, игр и музыки.
-            </p>
+            <p class="about">Привет! Здесь собраны важные ссылки для связи, игр и музыки.</p>
             <div class="chips" aria-label="Теги">
               <span class="chip">🎧 Музыка</span>
               <span class="chip">🎮 Игры</span>
@@ -512,7 +868,6 @@
             <div class="links">
               <a class="link" href="https://open.spotify.com/user/9nxyvi6nqz9k7n1egby0x9it1" target="_blank" rel="noreferrer">
                 <span class="icon" aria-hidden="true">
-                  <!-- Music -->
                   <svg viewBox="0 0 24 24" fill="none">
                     <path d="M10 18a2.5 2.5 0 1 1-1.5-2.3V7.5L19 5v8.5" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M19 16.5a2.5 2.5 0 1 1-1.5-2.3V5" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -527,7 +882,6 @@
 
               <a class="link" href="https://lolz.guru/members/186163" target="_blank" rel="noreferrer">
                 <span class="icon" aria-hidden="true">
-                  <!-- Forum / Message -->
                   <svg viewBox="0 0 24 24" fill="none">
                     <path d="M7.5 7.5h9A3.5 3.5 0 0 1 20 11v4A3.5 3.5 0 0 1 16.5 18H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 15v-4A3.5 3.5 0 0 1 7.5 7.5Z"
                           stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-linejoin="round"/>
@@ -548,18 +902,18 @@
 
       <footer>
         <span>© <span id="year"></span> Pifpafpifpaf</span>
-        <a href="#" id="toTop"></a>
+        <a href="#" id="toTop">Наверх</a>
       </footer>
     </main>
   </div>
 
   <script>
-        async function copyText(text){
+    // ====== Copy helper for Discord ======
+    async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
         return true;
       } catch {
-        // fallback для случаев, когда clipboard недоступен
         try{
           const ta = document.createElement('textarea');
           ta.value = text;
@@ -594,6 +948,7 @@
         setTimeout(() => badge.textContent = old, 1100);
       }
     });
+
     // ====== Basics ======
     document.getElementById('year').textContent = String(new Date().getFullYear());
 
@@ -618,7 +973,6 @@
       addRipple(target, e.clientX, e.clientY);
     });
 
-
     // ====== Interaction sounds (WebAudio) ======
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -632,7 +986,6 @@
       lastHoverAt: 0
     };
 
-    // load preference
     const storedSound = localStorage.getItem('soundEnabled');
     if(storedSound === '0') sound.enabled = false;
 
@@ -649,7 +1002,7 @@
       if(!sound.ctx){
         sound.ctx = new AC();
         sound.master = sound.ctx.createGain();
-        sound.master.gain.value = 0.14; // общая громкость (подкрути по вкусу)
+        sound.master.gain.value = 0.14;
         sound.master.connect(sound.ctx.destination);
       }
       if(sound.ctx.state === 'suspended'){
@@ -662,7 +1015,7 @@
       if(!ensureAudio()) return;
 
       const now = performance.now();
-      if(now - sound.lastHoverAt < 70) return; // throttle
+      if(now - sound.lastHoverAt < 70) return;
       sound.lastHoverAt = now;
 
       const ctx = sound.ctx;
@@ -735,13 +1088,9 @@
       sound.enabled = !sound.enabled;
       localStorage.setItem('soundEnabled', sound.enabled ? '1' : '0');
       syncSoundUI();
-
-      // маленький “клик” при включении (только если включили)
       if(sound.enabled) playClickSound();
     });
 
-    // Делегируем звуки на элементы интерфейса
-    // hover
     document.addEventListener('pointerover', (e) => {
       const el = e.target.closest('.link, .pill, .chip');
       if(!el) return;
@@ -749,7 +1098,6 @@
       playHoverSound();
     }, { passive: true });
 
-    // click (на pointerdown звучит отзывчивее)
     document.addEventListener('pointerdown', (e) => {
       const el = e.target.closest('.link, .pill');
       if(!el) return;
@@ -760,13 +1108,13 @@
     function attachTilt(el){
       if (prefersReduced) return;
 
-      const maxTilt = 10; // degrees
-      const maxLift = 6;  // px
+      const maxTilt = 10;
+      const maxLift = 6;
 
       function onMove(e){
         const rect = el.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width;   // 0..1
-        const py = (e.clientY - rect.top) / rect.height;  // 0..1
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
         const rx = (py - 0.5) * -2 * maxTilt;
         const ry = (px - 0.5) *  2 * maxTilt;
         el.style.transform = `translateY(-${maxLift}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
@@ -778,7 +1126,7 @@
     }
     document.querySelectorAll('[data-tilt]').forEach(attachTilt);
 
-    // ====== Animated background: Snow / Stars ======
+    // ====== Canvas setup ======
     const canvas = document.getElementById('bg');
     const ctx = canvas.getContext('2d', { alpha: true });
 
@@ -796,6 +1144,11 @@
     window.addEventListener('resize', resize, { passive: true });
     resize();
 
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t){ return a + (b - a) * t; }
+
+    // ====== Background: Snow / Stars ======
     const modes = {
       snow:  { label: "Снег",  count: 140 },
       stars: { label: "Звёзды", count: 180 },
@@ -804,8 +1157,6 @@
 
     const bgModeLabel = document.getElementById('bgModeLabel');
     const bgToggle = document.getElementById('bgToggle');
-
-    function rand(min, max){ return Math.random() * (max - min) + min; }
 
     let particles = [];
 
@@ -847,9 +1198,182 @@
 
     rebuild();
 
-    // ====== Premium mouse trail (smooth ribbon + sparks) ======
-    const pointer = { x: W * 0.5, y: H * 0.35 };
+    // ====== New Year mode toggle ======
+    const nyToggle = document.getElementById('nyToggle');
+    const nyLabel = document.getElementById('nyLabel');
 
+    function isNYSeason(){
+      const d = new Date();
+      const m = d.getMonth(); // 0..11
+      const day = d.getDate();
+      return (m === 11 && day >= 15) || (m === 0 && day <= 10);
+    }
+
+    // ====== Mini fireworks (NY) - MORE & COLORFUL ======
+    const fw = [];
+    const fwFlash = [];
+
+    const FW_PALETTE = [
+      { r: 160, g: 120, b: 255 }, // purple
+      { r: 255, g:  90, b: 140 }, // pink/red
+      { r: 255, g: 230, b: 140 }, // gold
+      { r: 120, g: 255, b: 180 }, // green
+      { r:  90, g: 210, b: 255 }, // cyan
+      { r: 255, g: 255, b: 255 }, // white
+    ];
+
+    function spawnFireworkBurst(x, y, count = 92){
+      const now = performance.now();
+      fwFlash.push({ x, y, t: now, life: 220 });
+
+      for(let i = 0; i < count; i++){
+        const ang = rand(0, Math.PI * 2);
+        const sp  = rand(2.2, 7.6);
+        const c = FW_PALETTE[(Math.random() * FW_PALETTE.length) | 0];
+
+        fw.push({
+          x, y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          t: now,
+          life: rand(720, 1300),
+          r: rand(1.2, 2.6),
+          a: rand(0.70, 1.00),
+          cr: c.r, cg: c.g, cb: c.b
+        });
+      }
+    }
+
+    function triggerNYFireworks(){
+      if(prefersReduced) return;
+
+      const bursts = 10; // больше залпов
+      for(let i = 0; i < bursts; i++){
+        const delay = i * 170 + rand(0, 120);
+        setTimeout(() => {
+          spawnFireworkBurst(
+            rand(W * 0.16, W * 0.84),
+            rand(H * 0.10, H * 0.52),
+            90 + ((Math.random() * 34) | 0)
+          );
+        }, delay);
+      }
+    }
+
+    function updateAndDrawFireworks(now, dt){
+      if(fwFlash.length){
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for(let i = fwFlash.length - 1; i >= 0; i--){
+          const f = fwFlash[i];
+          const age = now - f.t;
+          const k = 1 - Math.min(1, age / f.life);
+          if(k <= 0){ fwFlash.splice(i, 1); continue; }
+
+          const rad = 70 + (1 - k) * 90;
+          const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rad);
+          g.addColorStop(0, `rgba(255,255,255,${0.12 * k})`);
+          g.addColorStop(0.35, `rgba(255,230,140,${0.14 * k})`);
+          g.addColorStop(1, `rgba(160,120,255,0)`);
+
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, rad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      if(!fw.length) return;
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.lineCap = 'round';
+
+      for(let i = fw.length - 1; i >= 0; i--){
+        const p = fw[i];
+        const age = now - p.t;
+        const k = 1 - Math.min(1, age / p.life);
+
+        if(k <= 0){
+          fw.splice(i, 1);
+          continue;
+        }
+
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.vy += 0.020 * (dt * 0.06);
+
+        p.x += p.vx * (dt * 0.06);
+        p.y += p.vy * (dt * 0.06);
+
+        const alpha = p.a * k;
+
+        ctx.strokeStyle = `rgba(${p.cr},${p.cg},${p.cb},${alpha * 0.48})`;
+        ctx.lineWidth = p.r * 3.3;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 3.2, p.y - p.vy * 3.2);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.24})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function setNYMode(on){
+      const wasOn = document.body.classList.contains('ny');
+
+      document.body.classList.toggle('ny', on);
+      if(nyLabel) nyLabel.textContent = on ? 'Вкл' : 'Выкл';
+      localStorage.setItem('nyMode', on ? '1' : '0');
+
+      if(on && mode !== 'snow'){
+        mode = 'snow';
+        rebuild();
+      }
+
+      if(!wasOn && on){
+        triggerNYFireworks();
+      }
+    }
+
+    const savedNY = localStorage.getItem('nyMode');
+    if(savedNY === null) setNYMode(isNYSeason());
+    else setNYMode(savedNY === '1');
+
+    nyToggle.addEventListener('click', () => {
+      setNYMode(!document.body.classList.contains('ny'));
+    });
+
+    // ====== Hover reaction on trees (without capturing clicks) ======
+    const nyTrees = Array.from(document.querySelectorAll('.nyTree'));
+    let lastHoverCheck = 0;
+
+    function updateTreeHover(clientX, clientY){
+      if(!document.body.classList.contains('ny')) {
+        // убрать подсветку, если выключили NY
+        for(const t of nyTrees) t.classList.remove('isHover');
+        return;
+      }
+
+      const now = performance.now();
+      if(now - lastHoverCheck < 28) return; // лёгкий throttle
+      lastHoverCheck = now;
+
+      for(const t of nyTrees){
+        const r = t.getBoundingClientRect();
+        const inside = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+        t.classList.toggle('isHover', inside);
+      }
+    }
+
+    // ====== Premium mouse trail (static purple) ======
+    const pointer = { x: W * 0.5, y: H * 0.35 };
     const trail = [];
     const sparks = [];
 
@@ -859,9 +1383,6 @@
 
     const SPARK_MAX = 140;
     const SPARK_LIFE = 420;
-
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-    function lerp(a, b, t){ return a + (b - a) * t; }
 
     function pushTrail(x, y){
       if (prefersReduced) return;
@@ -880,7 +1401,7 @@
       if(dist < TRAIL_MIN_DIST) return;
 
       const dt = Math.max(8, now - last.t);
-      const speed = dist / dt; // px per ms
+      const speed = dist / dt;
 
       trail.push({ x, y, t: now, s: speed });
 
@@ -1001,12 +1522,9 @@
         const baseW = lerp(1.2, 6.0, Math.pow(prog, 0.9));
         const w = baseW * (0.75 + 0.65 * sp) * (0.55 + 0.45 * fade);
 
-        const hue = (now * 0.03 + prog * 60) % 360;
+        const PURPLE_OUT = '160, 120, 255';
+        const PURPLE_IN  = '135,  95, 235';
 
-         const PURPLE_OUT = '160, 120, 255'; // внешнее свечение
-        const PURPLE_IN  = '135,  95, 235'; // внутренняя лента
-
-        // outer glow
         ctx.strokeStyle = `rgba(${PURPLE_OUT}, ${0.075 * fade})`;
         ctx.lineWidth = w * 2.6;
         ctx.beginPath();
@@ -1014,7 +1532,6 @@
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
 
-        // inner color
         ctx.strokeStyle = `rgba(${PURPLE_IN}, ${0.13 * fade})`;
         ctx.lineWidth = w * 1.25;
         ctx.beginPath();
@@ -1022,7 +1539,6 @@
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
 
-        // bright core (оставляем белым, но не слишком сильным)
         ctx.strokeStyle = `rgba(255,255,255,${0.085 * fade})`;
         ctx.lineWidth = Math.max(0.8, w * 0.35);
         ctx.beginPath();
@@ -1034,35 +1550,34 @@
       const head = pts[n - 1];
       const headFade = clamp(1 - (now - head.t) / (TRAIL_LIFE * 0.7), 0, 1);
       const g = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 40);
-        g.addColorStop(0, `rgba(255,255,255,${0.07 * headFade})`);
-        g.addColorStop(0.35, `rgba(160,120,255,${0.10 * headFade})`);
-        g.addColorStop(1, `rgba(160,120,255,0)`);
+      g.addColorStop(0, `rgba(255,255,255,${0.07 * headFade})`);
+      g.addColorStop(0.35, `rgba(160,120,255,${0.10 * headFade})`);
+      g.addColorStop(1, `rgba(160,120,255,0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(head.x, head.y, 40, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
-
       updateAndDrawSparks(now, dt);
     }
 
-    // Pointer events: обновляют pointer + хвост
+    // Pointer events: pointer + хвост + "наведение" на ёлки
     window.addEventListener('pointermove', (e) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       pushTrail(e.clientX, e.clientY);
+      updateTreeHover(e.clientX, e.clientY);
     }, { passive: true });
 
     window.addEventListener('pointerdown', (e) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       pushTrail(e.clientX, e.clientY);
-      // первый клик часто “размораживает” AudioContext в браузере
       ensureAudio();
     }, { passive: true });
 
-    // ====== Background animation loop ======
+    // ====== Animation loop ======
     let lastT = performance.now();
 
     function loop(t){
@@ -1134,7 +1649,10 @@
         }
       }
 
-      // Trail поверх фона
+      // NY fireworks (draw above snow/stars)
+      updateAndDrawFireworks(t, dt);
+
+      // Mouse trail
       drawTrail(t, dt);
 
       requestAnimationFrame(loop);
@@ -1143,7 +1661,4 @@
     if(!prefersReduced) requestAnimationFrame(loop);
   </script>
 </body>
-
 </html>
-
-
