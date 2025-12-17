@@ -983,7 +983,9 @@
       enabled: true,
       ctx: null,
       master: null,
-      lastHoverAt: 0
+      lastHoverAt: 0,
+      lastFireworkAt: 0,
+      noiseBuf: null
     };
 
     const storedSound = localStorage.getItem('soundEnabled');
@@ -1082,6 +1084,115 @@
       osc2.start(t0);
       osc1.stop(t0 + 0.10);
       osc2.stop(t0 + 0.10);
+    }
+
+    // ====== Firework "pop" (quiet, atmospheric) ======
+    function ensureNoiseBuffer(){
+      if(!sound.ctx) return null;
+      if(sound.noiseBuf) return sound.noiseBuf;
+
+      const ctx = sound.ctx;
+      const seconds = 0.22;
+      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i = 0; i < data.length; i++){
+        // мягкий белый шум
+        data[i] = (Math.random() * 2 - 1) * 0.85;
+      }
+      sound.noiseBuf = buffer;
+      return buffer;
+    }
+
+    function playFireworkPop(xNorm = 0.5){
+      // xNorm: 0..1 (позиция по экрану)
+      if(!ensureAudio()) return;
+
+      const nowMs = performance.now();
+      // чтобы 10 залпов подряд не превращались в кашу
+      if(nowMs - sound.lastFireworkAt < 75) return;
+      sound.lastFireworkAt = nowMs;
+
+      const ctx = sound.ctx;
+      const t0 = ctx.currentTime;
+
+      // общий уровень «пупа» (очень тихо)
+      const out = ctx.createGain();
+      out.gain.setValueAtTime(0.0001, t0);
+      out.gain.exponentialRampToValueAtTime(0.12, t0 + 0.004);
+      out.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+
+      // лёгкое панорамирование
+      const pan = (xNorm - 0.5) * 0.55;
+      const panner = (typeof ctx.createStereoPanner === 'function') ? ctx.createStereoPanner() : null;
+      if(panner) panner.pan.setValueAtTime(pan, t0);
+
+      // мягкий компрессор, чтобы не выпирало
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.setValueAtTime(-28, t0);
+      comp.knee.setValueAtTime(18, t0);
+      comp.ratio.setValueAtTime(3.0, t0);
+      comp.attack.setValueAtTime(0.003, t0);
+      comp.release.setValueAtTime(0.08, t0);
+
+      // основная «пуп»-тональность
+      const tone1 = ctx.createOscillator();
+      const tone2 = ctx.createOscillator();
+      const tGain = ctx.createGain();
+
+      tone1.type = 'sine';
+      tone2.type = 'triangle';
+
+      const base = 160 + Math.random() * 40;
+      tone1.frequency.setValueAtTime(base * 2.2, t0);
+      tone1.frequency.exponentialRampToValueAtTime(base * 1.2, t0 + 0.05);
+
+      tone2.frequency.setValueAtTime(base * 1.2, t0);
+      tone2.frequency.exponentialRampToValueAtTime(base * 0.72, t0 + 0.08);
+
+      tGain.gain.setValueAtTime(0.0001, t0);
+      tGain.gain.exponentialRampToValueAtTime(0.85, t0 + 0.003);
+      tGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
+
+      // небольшой "воздух" — шум через bandpass
+      const noiseBuf = ensureNoiseBuffer();
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuf;
+
+      const nFilter = ctx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.setValueAtTime(2100 + Math.random() * 500, t0);
+      nFilter.Q.setValueAtTime(1.6, t0);
+
+      const nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.0001, t0);
+      nGain.gain.exponentialRampToValueAtTime(0.45, t0 + 0.002);
+      nGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.07);
+
+      // Wiring
+      tone1.connect(tGain);
+      tone2.connect(tGain);
+      tGain.connect(out);
+
+      noise.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(out);
+
+      if(panner){
+        out.connect(panner);
+        panner.connect(comp);
+      } else {
+        out.connect(comp);
+      }
+      comp.connect(sound.master);
+
+      // Play
+      tone1.start(t0);
+      tone2.start(t0);
+      noise.start(t0);
+
+      tone1.stop(t0 + 0.14);
+      tone2.stop(t0 + 0.14);
+      noise.stop(t0 + 0.08);
     }
 
     soundToggle.addEventListener('click', () => {
@@ -1226,6 +1337,9 @@
       const now = performance.now();
       fwFlash.push({ x, y, t: now, life: 220 });
 
+      // тихий "пуп" под взрыв (если включён звук)
+      playFireworkPop(clamp(x / Math.max(1, W), 0, 1));
+
       for(let i = 0; i < count; i++){
         const ang = rand(0, Math.PI * 2);
         const sp  = rand(2.2, 7.6);
@@ -1247,7 +1361,7 @@
     function triggerNYFireworks(){
       if(prefersReduced) return;
 
-      const bursts = 10; // больше залпов
+      const bursts = 20; // больше залпов
       for(let i = 0; i < bursts; i++){
         const delay = i * 170 + rand(0, 120);
         setTimeout(() => {
@@ -1347,6 +1461,8 @@
     else setNYMode(savedNY === '1');
 
     nyToggle.addEventListener('click', () => {
+      // важный жест пользователя для WebAudio (особенно на мобилках)
+      ensureAudio();
       setNYMode(!document.body.classList.contains('ny'));
     });
 
