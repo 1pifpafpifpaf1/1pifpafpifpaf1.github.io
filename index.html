@@ -498,34 +498,43 @@
       transition: opacity .2s ease, stroke .2s ease;
     }
 
-    /* Лампочки-гирлянда: мерцают + переливаются цветами */
+    /* Лампочки-гирлянда: оптимизированная анимация (меньше repaint) */
     .nyBulb{
       /* отдельные задержки для двух анимаций */
       --twDelay: 0s;
       --colDelay: 0s;
-      --colDur: 6.8s;
+      --colDur: 8.8s; /* чуть медленнее = меньше событий смены */
 
-      filter: drop-shadow(0 0 14px rgba(255,255,255,.18));
-      opacity: .92;
+      /* Базово без фильтра: drop-shadow на десятках SVG-элементов очень дорогой.
+         Подсветка/свечение включаются только при hover на ёлке (см. .isHover ниже). */
+      filter: none;
+
+      opacity: .90;
       transition: transform .18s ease, filter .18s ease, opacity .18s ease;
       transform-origin: center;
 
-      animation-name: nyTwinkle, nyColorCycle;
+      /* twinkle теперь только по opacity (без scale) — заметно дешевле */
+      animation-name: nyBulbTwinkle, nyColorCycleSteps;
       animation-duration: 1.55s, var(--colDur);
       animation-timing-function: ease-in-out, linear;
       animation-iteration-count: infinite, infinite;
       animation-delay: var(--twDelay), var(--colDelay);
     }
 
-    /* цикл смены цветов (анимируем fill у SVG circle) */
-    @keyframes nyColorCycle{
-      0%   { fill: rgba(255,  90, 140, .92); }
-      16%  { fill: rgba( 90, 210, 255, .92); }
-      33%  { fill: rgba(255, 230, 140, .92); }
-      50%  { fill: rgba(120, 255, 180, .92); }
-      66%  { fill: rgba(160, 120, 255, .92); }
-      83%  { fill: rgba(255, 255, 255, .92); }
-      100% { fill: rgba(255,  90, 140, .92); }
+    @keyframes nyBulbTwinkle{
+      0%, 100%{ opacity: .55; }
+      50%     { opacity: 1; }
+    }
+
+    /* Цветовой цикл с «плато»: цвет не интерполируется каждый кадр (меньше перерисовок) */
+    @keyframes nyColorCycleSteps{
+      0%, 15.9%   { fill: rgba(255,  90, 140, .92); }
+      16%, 32.9%  { fill: rgba( 90, 210, 255, .92); }
+      33%, 49.9%  { fill: rgba(255, 230, 140, .92); }
+      50%, 65.9%  { fill: rgba(120, 255, 180, .92); }
+      66%, 82.9%  { fill: rgba(160, 120, 255, .92); }
+      83%, 99.9%  { fill: rgba(255, 255, 255, .92); }
+      100%        { fill: rgba(255,  90, 140, .92); }
     }
 
     /* разнесём лампочки по фазам (twinkle + color), чтобы перелив был не синхронный */
@@ -544,23 +553,6 @@
     .nyBulb.b11 { --twDelay: 0.55s; --colDelay: -2.75s; --colDur: 7.1s; }
     .nyBulb.b12 { --twDelay: 0.75s; --colDelay: -3.65s; --colDur: 6.5s; }
 
-    /* реакция лампочек при "наведении" (мы выставляем .isHover через JS) */
-    body.ny .nyTree.isHover{
-      filter: drop-shadow(0 16px 34px rgba(0,0,0,.32)) drop-shadow(0 0 18px rgba(255,230,140,.10));
-    }
-    body.ny .nyTree.isHover .nyBulb{
-      opacity: 1;
-      transform: scale(1.35);
-      filter: drop-shadow(0 0 22px rgba(255,255,255,.22));
-    }
-    body.ny .nyTree.isHover .nyGarland{
-      opacity: 1;
-      stroke: rgba(255,255,255,.22);
-    }
-    body.ny .nyTree.isHover .nyStar{
-      filter: drop-shadow(0 0 22px rgba(255,230,140,.26));
-      transform: scale(1.06);
-    }
 
     @keyframes nyTwinkle{
       0%, 100%{ opacity: .55; transform: translateZ(0) scale(0.96); }
@@ -573,6 +565,46 @@
 
     /* В Safari иногда «clip» анимаций fill в SVG выглядит лучше, если подсказать GPU */
     .nyBulb{ will-change: opacity, transform, filter, fill; }
+
+    /* ====== Sound unlock toast ====== */
+    .soundToast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 50;
+      max-width: min(520px, calc(100vw - 28px));
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: rgba(255,255,255,.86);
+      font-size: 12.5px;
+      line-height: 1.3;
+      box-shadow: 0 18px 60px rgba(0,0,0,.40);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(8px);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .soundToast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .soundToast kbd{
+      font: inherit;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.90);
+      margin: 0 4px;
+      white-space: nowrap;
+    }
+    @media (prefers-reduced-motion: reduce){
+      .soundToast{ transition: none !important; }
+    }
   </style>
 </head>
 
@@ -759,7 +791,7 @@
             Фон: <span id="bgModeLabel">Снег</span>
           </button>
           <button class="pill" id="soundToggle" type="button" title="Включить или выключить звуки">
-            Звук: <span id="soundLabel">Вкл</span>
+            Звук: <span id="soundLabel">Выкл</span>
           </button>
           <button class="pill" id="nyToggle" type="button" title="Новогодний режим">
             Новый год: <span id="nyLabel">Вкл</span>
@@ -907,6 +939,10 @@
     </main>
   </div>
 
+  <div id="soundToast" class="soundToast" role="status" aria-live="polite">
+    Звук заблокирован браузером. Нажми <kbd>клик</kbd> или <kbd>Enter</kbd>, чтобы включить.
+  </div>
+
   <script>
     // ====== Copy helper for Discord ======
     async function copyText(text){
@@ -980,7 +1016,8 @@
     const soundLabel = document.getElementById('soundLabel');
 
     const sound = {
-      enabled: true,
+      // По умолчанию звук выключен (включается пользователем кнопкой)
+      enabled: false,
       ctx: null,
       master: null,
       lastHoverAt: 0,
@@ -988,13 +1025,79 @@
       noiseBuf: null
     };
 
-    const storedSound = localStorage.getItem('soundEnabled');
-    if(storedSound === '0') sound.enabled = false;
+    // Звук всегда стартует выключенным (в том числе после обновления страницы)
+    sound.enabled = false;
+    // На всякий случай чистим старое сохранение, чтобы кнопка не показывала "Вкл" после обновления
+    try{ localStorage.removeItem('soundEnabled'); } catch {}
 
     function syncSoundUI(){
       soundLabel.textContent = sound.enabled ? "Вкл" : "Выкл";
     }
     syncSoundUI();
+
+    // ====== Autoplay policy helper (best-effort) ======
+    const soundToast = document.getElementById('soundToast');
+    let unlockListenersInstalled = false;
+
+    function setSoundToast(show){
+      if(!soundToast) return;
+      soundToast.classList.toggle('show', !!show);
+    }
+
+    function pokeSilent(){
+      // На iOS/Safari иногда нужно «проиграть» что-то нулевой громкости, чтобы контекст ожил.
+      if(!sound.ctx) return;
+      try{
+        const ctx = sound.ctx;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        g.gain.value = 0;
+        osc.frequency.value = 30;
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.02);
+      } catch {}
+    }
+
+    async function unlockAudio(){
+      if(!sound.enabled) { setSoundToast(false); return false; }
+      if(!ensureAudio()) { setSoundToast(false); return false; }
+
+      try{ await sound.ctx.resume(); } catch {}
+      pokeSilent();
+
+      const ok = !!sound.ctx && sound.ctx.state === 'running';
+      setSoundToast(sound.enabled && !ok);
+      return ok;
+    }
+
+    function installUnlockListeners(){
+      if(unlockListenersInstalled) return;
+      unlockListenersInstalled = true;
+
+      const handler = () => { unlockAudio(); };
+
+      // Эти события обычно считаются «user gesture».
+      window.addEventListener('pointerdown', handler, { once: true, passive: true });
+      window.addEventListener('touchstart', handler, { once: true, passive: true });
+      window.addEventListener('keydown', handler, { once: true });
+    }
+
+    function tryAutoUnlockAudio(){
+      // Попытка включить звук «сразу» при заходе. В большинстве браузеров будет заблокировано политикой autoplay.
+      if(!sound.enabled) { setSoundToast(false); return; }
+      if(!ensureAudio()) { setSoundToast(false); return; }
+
+      sound.ctx.resume().catch(() => {});
+      setTimeout(() => {
+        const ok = !!sound.ctx && sound.ctx.state === 'running';
+        setSoundToast(sound.enabled && !ok);
+        if(!ok) installUnlockListeners();
+      }, 120);
+    }
+
+    // Не пытаемся запускать звук автоматически при загрузке (по умолчанию звук выключен).
 
     function ensureAudio(){
       if(!sound.enabled) return false;
@@ -1195,11 +1298,19 @@
       noise.stop(t0 + 0.08);
     }
 
-    soundToggle.addEventListener('click', () => {
+    soundToggle.addEventListener('click', async () => {
       sound.enabled = !sound.enabled;
-      localStorage.setItem('soundEnabled', sound.enabled ? '1' : '0');
+      // Не сохраняем состояние: при обновлении страницы звук снова будет выключен
       syncSoundUI();
-      if(sound.enabled) playClickSound();
+
+      if(sound.enabled){
+        // клик по кнопке — это жест пользователя, можно сразу разблокировать аудио
+        const ok = await unlockAudio();
+        if(!ok) installUnlockListeners();
+        playClickSound();
+      } else {
+        setSoundToast(false);
+      }
     });
 
     document.addEventListener('pointerover', (e) => {
@@ -1313,6 +1424,7 @@
     const nyToggle = document.getElementById('nyToggle');
     const nyLabel = document.getElementById('nyLabel');
 
+
     function isNYSeason(){
       const d = new Date();
       const m = d.getMonth(); // 0..11
@@ -1361,7 +1473,7 @@
     function triggerNYFireworks(){
       if(prefersReduced) return;
 
-      const bursts = 20; // больше залпов
+      const bursts = 10; // больше залпов
       for(let i = 0; i < bursts; i++){
         const delay = i * 170 + rand(0, 120);
         setTimeout(() => {
@@ -1446,6 +1558,7 @@
       if(nyLabel) nyLabel.textContent = on ? 'Вкл' : 'Выкл';
       localStorage.setItem('nyMode', on ? '1' : '0');
 
+
       if(on && mode !== 'snow'){
         mode = 'snow';
         rebuild();
@@ -1460,33 +1573,11 @@
     if(savedNY === null) setNYMode(isNYSeason());
     else setNYMode(savedNY === '1');
 
+
     nyToggle.addEventListener('click', () => {
-      // важный жест пользователя для WebAudio (особенно на мобилках)
-      ensureAudio();
       setNYMode(!document.body.classList.contains('ny'));
     });
 
-    // ====== Hover reaction on trees (without capturing clicks) ======
-    const nyTrees = Array.from(document.querySelectorAll('.nyTree'));
-    let lastHoverCheck = 0;
-
-    function updateTreeHover(clientX, clientY){
-      if(!document.body.classList.contains('ny')) {
-        // убрать подсветку, если выключили NY
-        for(const t of nyTrees) t.classList.remove('isHover');
-        return;
-      }
-
-      const now = performance.now();
-      if(now - lastHoverCheck < 28) return; // лёгкий throttle
-      lastHoverCheck = now;
-
-      for(const t of nyTrees){
-        const r = t.getBoundingClientRect();
-        const inside = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
-        t.classList.toggle('isHover', inside);
-      }
-    }
 
     // ====== Premium mouse trail (static purple) ======
     const pointer = { x: W * 0.5, y: H * 0.35 };
@@ -1678,12 +1769,11 @@
       updateAndDrawSparks(now, dt);
     }
 
-    // Pointer events: pointer + хвост + "наведение" на ёлки
+    // Pointer events: pointer + хвост
     window.addEventListener('pointermove', (e) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       pushTrail(e.clientX, e.clientY);
-      updateTreeHover(e.clientX, e.clientY);
     }, { passive: true });
 
     window.addEventListener('pointerdown', (e) => {
