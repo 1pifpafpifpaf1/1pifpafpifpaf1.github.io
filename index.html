@@ -794,7 +794,7 @@
             Звук: <span id="soundLabel">Выкл</span>
           </button>
           <button class="pill" id="nyToggle" type="button" title="Новогодний режим">
-            Новый год: <span id="nyLabel">Вкл</span>
+            Новый год: <span id="nyLabel">Выкл</span>
           </button>
         </div>
       </header>
@@ -934,7 +934,7 @@
 
       <footer>
         <span>© <span id="year"></span> Pifpafpifpaf</span>
-        <a href="#" id="toTop">Наверх</a>
+        <a href="#" id="toTop"></a>
       </footer>
     </main>
   </div>
@@ -1556,8 +1556,12 @@
 
       document.body.classList.toggle('ny', on);
       if(nyLabel) nyLabel.textContent = on ? 'Вкл' : 'Выкл';
-      localStorage.setItem('nyMode', on ? '1' : '0');
 
+      // Если выключаем — сразу прекращаем текущие салюты
+      if(!on){
+        fw.length = 0;
+        fwFlash.length = 0;
+      }
 
       if(on && mode !== 'snow'){
         mode = 'snow';
@@ -1569,10 +1573,9 @@
       }
     }
 
-    const savedNY = localStorage.getItem('nyMode');
-    if(savedNY === null) setNYMode(isNYSeason());
-    else setNYMode(savedNY === '1');
-
+    // Новый год всегда стартует выключенным (и после обновления страницы тоже)
+    try{ localStorage.removeItem('nyMode'); } catch {}
+    setNYMode(false);
 
     nyToggle.addEventListener('click', () => {
       setNYMode(!document.body.classList.contains('ny'));
